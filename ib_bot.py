@@ -12,13 +12,7 @@ from ibapi.contract import Contract
 from ibapi.utils import iswrapper
 from candle import Candle, CandleGroup
 
-
-BS_NUMCANDLES = 6
-BS_WICKPERCENTAGE = 0.05
-BS_BODYRATIO = 3.0
-
-
-TELEGRAM_TOKEN = '1393054324:AAGB724lrwVA3MUv1dXNOYju5-ahSVoX1zE'
+import config
 
 class IBapi( EWrapper, EClient):
 
