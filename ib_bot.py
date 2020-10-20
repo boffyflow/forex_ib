@@ -61,8 +61,6 @@ def sendtext( text):
 
 def main():
 
-#    sendtext( 'found big shadow on USDCAD 1H')
-
     app.connect( '127.0.0.1', 7496, 123)
     
     api_thread =threading.Thread( target=run_loop, daemon=True)
@@ -94,15 +92,6 @@ def main():
 
     except KeyboardInterrupt:
         pass
-
-#    time.sleep( 120)
-
-#    df = pandas.DataFrame( app.data, columns=['DateTime', 'Open', 'Low', 'High', 'Close'])
-#    df['DateTime'] = pandas.to_datetime( df['DateTime'], unit='s')
-
-#    print( df)
-
-#    df.to_csv( 'USDCAD_1h.csv')
 
     app.disconnect()
 
