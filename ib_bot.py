@@ -53,7 +53,7 @@ def run_loop():
 
 def sendtext( text):
 
-    token = TELEGRAM_TOKEN
+    token = config.TELEGRAM_TOKEN
     params = { 'chat_id': '977708575', 'text': text}
     resp = requests.post( 'https://api.telegram.org/bot{}/sendMessage'.format( token), params)
     print( resp)
@@ -85,10 +85,10 @@ def main():
             if app.isDirty():
                 candles = []
                 print('checking for big shadow for candle @', app.data[1][0])
-                for i in range( 1, BS_NUMCANDLES + 1):
+                for i in range( 1, config.BS_NUMCANDLES + 1):
                     candles.append( Candle( app.data[i][1], app.data[i][2], app.data[i][3], app.data[i][4]))
                 cg = CandleGroup( candles)
-                if cg.bigShadow( maxBodyRatio=BS_BODYRATIO, wickPercent=BS_WICKPERCENTAGE):
+                if cg.bigShadow( maxBodyRatio=config.BS_BODYRATIO, wickPercent=config.BS_WICKPERCENTAGE):
                     print('big shadow found for candle @', app.data[1][0])
                     sendtext( 'found big shadow on USDCAD 1H')
 
