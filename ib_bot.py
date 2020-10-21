@@ -1,6 +1,6 @@
 import requests
 import time
-from datetime import date
+from datetime import date, datetime
 import threading
 import pandas
 
@@ -25,7 +25,7 @@ class IBapi( EWrapper, EClient):
     def historicalData( self, reqId, bar):
         self.data.insert(0, [bar.date, bar.open, bar.high, bar.low, bar.close, bar.volume])
         self.datasize = len( self.data)
-        print( self.data[0][0])
+        print( datetime.fromtimestamp( int(self.data[0][0])).strftime( '%b %d %Y %H:%M:%S'))
 
     def historicalDataUpdate( self, reqId, bar):
         if( bar.close != self.lastclose):
@@ -35,8 +35,8 @@ class IBapi( EWrapper, EClient):
                 self.isdirty = True
             elif bar.date == self.data[0][0]:
                 self.data[0] = [bar.date, bar.open, bar.high, bar.low, bar.close, bar.volume]
-
-            print('current price:', bar.close, ', date:', bar.date)
+            ts = datetime.fromtimestamp( int( bar.date))
+            print('closing price price:', bar.close, ', date:', ts.strftime( '%b %d %Y %H:%M:%S'))
 
     def isDirty(self):
         if len( self.data) != self.datasize:
@@ -82,13 +82,14 @@ def main():
             time.sleep( 3)
             if app.isDirty():
                 candles = []
-                print('checking for big shadow for candle @', app.data[1][0])
+                ts = datetime.fromtimestamp( int( app.data[1][0]))
+                print('checking for big shadow for candle @', ts.strftime( '%b %d %Y %H:%M:%S'))
                 for i in range( 1, config.BS_NUMCANDLES + 1):
                     candles.append( Candle( app.data[i][1], app.data[i][2], app.data[i][3], app.data[i][4]))
                 cg = CandleGroup( candles)
                 if cg.bigShadow( maxBodyRatio=config.BS_BODYRATIO, wickPercent=config.BS_WICKPERCENTAGE):
-                    print('big shadow found for candle @', app.data[1][0])
-                    sendtext( 'found big shadow on USDCAD 1H')
+                    print('big shadow found for candle @', ts.strftime( '%b %d %Y %H:%M:%S'))
+                    sendtext( ( 'found big shadow on USDCAD 1H @', ts.strftime( '%b %d %Y %H:%M:%S')))
 
     except KeyboardInterrupt:
         pass
