@@ -71,10 +71,10 @@ class CandleGroup:
         aveBody = aveBody / len( self.candles)
 
         if pos != 0:
-            print( '#1 largest candle (out of', len(self.candles ), ') : FALSE')
+            print( '#1. largest candle (out of', len(self.candles ), ') : FALSE')
             return False
 
-        print( '#1 largest candle (out of', len(self.candles ), ') : TRUE')
+        print( '#1. largest candle (out of', len(self.candles ), ') : TRUE')
 
         currCandle = self.candles[0]
         
