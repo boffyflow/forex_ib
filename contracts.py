@@ -4,7 +4,10 @@ class ForexContract:
 
     def __init__(self, s='USDCAD'):
         self.symbol = s
-        self.requestid = 0
+        id = 0
+        for c in s[0:4]:
+            id += ord( c)
+        self.requestid = id
 
     def contract(self):
         contract = Contract()
@@ -14,7 +17,7 @@ class ForexContract:
         contract.exchange = 'IDEALPRO'
         return contract
     
-    def string(self):
+    def pair(self):
         return self.symbol
 
     def requestId(self):

@@ -50,7 +50,27 @@ class Candle:
                 w = self.c - self.l
         
         return abs(w) / ( self.body() + 0.00000001)
+    
+    def isHammer(self, bodyPercent=0.2, wickPercent=.02):
+        if self.body() <= self.range() * bodyPercent:
+            if self.direction() == Candle.CANDLELONG:
+                if abs( self.close() - self.high()) <= self.range() * wickPercent:
+                    return True
+            elif self.direction() == Candle.CANDLESHORT:
+                if abs( self.open() - self.high()) <= self.range() * wickPercent:
+                    return True
+        return False
 
+    def isHangingMan(self, bodyPercent=0.2, wickPercent=.02):
+        if self.body() <= self.range() * bodyPercent:
+            if self.direction() == Candle.CANDLELONG:
+                if abs( self.open() - self.low()) <= self.range() * wickPercent:
+                    return True
+            elif self.direction() == Candle.CANDLESHORT:
+                if abs( self.close() - self.low()) <= self.range() * wickPercent:
+                    return True
+        return False
+        
 class CandleGroup:
 
     def __init__ (self, candles):  # must current candle at index 0

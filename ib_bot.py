@@ -19,36 +19,25 @@ class IBapi( EWrapper, EClient):
     def __init__( self, pairs):
         EClient.__init__( self, self)
         self.pairs = pairs
-        self.data = []
-        self.lastclose = 0.0
-        self.datasize = 0
+        self.data = {}
+        for cp in pairs:
+            self.data[ cp.pair()] = []
         
     def historicalData( self, reqId, bar):
         for cp in self.pairs:
             if reqId == cp.requestId():
-                self.data.insert(0, [cp.string(), bar.date, bar.open, bar.high, bar.low, bar.close, bar.volume])
-                self.datasize[cp.requestId()] = len( self.data[cp.requestId()])
-                print( cp.string(), ':' , datetime.fromtimestamp( int(self.data[cp.requestId()][0][0])).strftime( '%b %d %Y %H:%M:%S'))
+                self.data[ cp.pair()].insert(0, [bar.date, bar.open, bar.high, bar.low, bar.close, bar.volume])
 
     def historicalDataUpdate( self, reqId, bar):
         for cp in self.pairs:
-            if( bar.close != self.lastclose[cp.requestId()]):
-                self.lastclose[cp.requestId()] = bar.close
-                if bar.date > self.data[cp.requestId()][0][0]:
-                    self.data[cp.requestId()].insert(0, [bar.date, bar.open, bar.high, bar.low, bar.close])
-                    self.isdirty[cp.requestId()] = True
-                elif bar.date == self.data[cp.requestId()][0][0]:
-                    self.data[cp.requestId()][0] = [bar.date, bar.open, bar.high, bar.low, bar.close, bar.volume]
-                ts = datetime.fromtimestamp( int( bar.date))
-                print(cp.string(), ': closing rice:', bar.close, ', date:', ts.strftime( '%b %d %Y %H:%M:%S'))
+            if reqId == cp.requestId():
+                data = self.data[cp.pair()]
+                if int(bar.date) > int(data[0][0]):
+                    data.insert(0, [bar.date, bar.open, bar.high, bar.low, bar.close, bar.volume])
+                elif int(bar.date) == int(data[0][0]):
+                    data[0] = [bar.date, bar.open, bar.high, bar.low, bar.close, bar.volume]
 
-    def isDirty(self, fc):
-        if len( self.data[fc.requestId()]) != self.datasize[fc.requestId()]:
-            self.datasize[fc.requestId()] = len( self.data[fc.requestId()])
-            return True
-        else:
-            return False
-
+###########################################
 
 pairs = []
 for cp in config.CURRENCYPAIRS:
@@ -77,22 +66,46 @@ def main():
     time.sleep( 1)
 
     for fc in pairs:
-        app.reqHistoricalData( fc.requestid(), fc.contract(), '', '10 D', '1 hour', 'BID', 0, 2, True, [])
+        app.reqHistoricalData( fc.requestId(), fc.contract(), '', '2 D', '1 hour', 'BID', 0, 2, True, [])
 
     try:
+        lastTS = {}
+        for cp in pairs:
+            lastTS[cp.pair()] = -1
+
         while True:
-            time.sleep( 1)
+            time.sleep( 10)
             for cp in pairs:
-                if app.isDirty(cp):
-                    candles = []
-                    ts = datetime.fromtimestamp( int( app.data[cp.requestId()][1][0]))
-                    print( cp.string(), ': checking for big shadow for candle @', ts.strftime( '%b %d %Y %H:%M:%S'))
-                    for i in range( 1, config.BS_NUMCANDLES + 1):
-                        candles.append( Candle( app.data[cp.requestId()][i][1], app.data[cp.requestId()][i][2], app.data[cp.requestId()][i][3], app.data[cp.requestId()][i][4]))
-                    cg = CandleGroup( candles)
-                    if cg.bigShadow( maxBodyRatio=config.BS_BODYRATIO, wickPercent=config.BS_WICKPERCENTAGE):
-                        print( cp.string(), ': big shadow found for candle @', ts.strftime( '%b %d %Y %H:%M:%S'))
-                        sendtext( ( cp.string(), ': found big shadow on USDCAD 1H @', ts.strftime( '%b %d %Y %H:%M:%S')))
+                data = app.data[cp.pair()]
+                print('last close price for ', cp.pair(), 'is',data[0][4],'@',datetime.fromtimestamp( int(data[0][0])).strftime( '%b %d %Y %H:%M:%S'))
+                if lastTS[cp.pair()] == data[0][0]:
+                    continue
+                lastTS[cp.pair()] = data[0][0]
+                candles = []
+                cnt = 1
+                while len(candles) != config.BS_NUMCANDLES:
+                    candles.append( Candle( data[cnt][1], data[cnt][2], data[cnt][3], data[cnt][4]))
+                    if len( candles) == 1:
+                        ts = datetime.fromtimestamp( int( data[cnt][0]))
+                        print( cp.pair(), ': checking candle patterns @', ts.strftime( '%b %d %Y %H:%M:%S'))
+                    cnt += 1
+                
+                cg = CandleGroup( candles)
+                found = False
+                msgString = ''
+                if candles[0].isHammer():
+                    msgString += cp.pair() + ' : hammer found for candle @ ' + ts.strftime( '%b %d %Y %H:%M:%S\n')
+                    found = True
+                if candles[0].isHangingMan():
+                    msgString += cp.pair() + ' : hanging man found for candle @ ' + ts.strftime( '%b %d %Y %H:%M:%S\n')
+                    found = True
+                if cg.bigShadow( maxBodyRatio=config.BS_BODYRATIO, wickPercent=config.BS_WICKPERCENTAGE):
+                    msgString += cp.pair() + ' : big shadow found for candle @ ' + ts.strftime( '%b %d %Y %H:%M:%S\n')
+                    found = True
+
+                if found:    
+                    print( msgString)
+                    sendtext( msgString)
 
     except KeyboardInterrupt:
         pass
